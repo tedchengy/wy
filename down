@@ -1,0 +1,179 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jun  8 19:45:51 2018
+
+@author: hzs10639
+"""
+
+# -*- coding: cp936 -*-
+
+import urllib,re,cookielib
+import os,glob,time,sys
+urllib.getproxies_registry = lambda : {}
+import urllib2
+
+#获取脚本文件的当前路径
+def cur_file_dir():
+    #获取脚本路径
+    path = sys.path[0]
+    #判断为脚本文件还是py2exe编译后的文件，如果是脚本文件，则返回的是脚本的目录，如果是py2exe编译后的文件，则返回的是编译后的文件路径
+    if os.path.isdir(path):
+        return path
+    elif os.path.isfile(path):
+        return os.path.dirname(path)
+#打印结果201
+print cur_file_dir()
+print os.getcwd()
+#filefolder = cur_file_dir().split('\\')[-1]
+filefolder = os.getcwd().split('\\')[-1]
+##filefolder = raw_input('输入下载的文件')
+file_input= raw_input('输入下载的起始日期')
+file_input_finally= raw_input('输入下载的结束日期')
+#n=int(raw_input('下载?天的数据:'))
+##filefolder_list=['gameplay',]
+DayStamp = time.mktime(time.strptime(file_input[:8], '%Y%m%d'))
+DayStamp_finally=time.mktime(time.strptime(file_input_finally[:8], '%Y%m%d'))
+n=int((DayStamp_finally-DayStamp))/(60*60*24)
+Hour = 60 *60
+Day = 24 *Hour
+
+
+def _build_opener():
+    cookie=cookielib.CookieJar()
+    proxy_support = urllib2.ProxyHandler({})
+    password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+    opener=urllib2.build_opener(proxy_support,urllib2.HTTPCookieProcessor(cookie))
+    urllib2.install_opener(opener)
+    return
+
+def _get_date_str():
+    import datetime
+    time_delta = datetime.timedelta(days=1)
+    return str(datetime.date.today()-time_delta)
+
+def _deco(func):
+    _build_opener()
+    print 'Opener Installed'
+    return func
+
+@_deco
+
+def find_str(start,end,str_info):
+    if start in str_info:
+        if end in str_info:
+            return str_info[(str_info.index(start)+len(start)):(str_info.index(end))]
+        else:
+            return str_info[(str_info.index(start)+len(start)):]
+    else:
+        if end in str_info:
+            return str_info[:(str_info.index(end))]
+        else:
+            return False
+
+path = "F:\\H37"
+
+def main():
+    import shutil
+    begin = 0
+    date_str = _get_date_str()
+    URL = 'http://hgdcx.gameyw.netease.com:8088/logs/h37/%s/%s'%(dir_str,log_str)
+    download_file_name  = os.path.join(path,dir_str,log_str)
+    #download_file_name = download_file_name.decode('utf-8').encode('gb18030')
+    new_path = os.path.join(path,dir_str)
+    if not os.path.isdir(new_path):
+        os.makedirs(new_path)
+    try:
+        Flag=1
+        while Flag:
+            try:
+                reqh= urllib2.Request(URL)
+                reqh.add_header('Range', 'bytes=%s-%s'%(begin,begin+20*1024*1024))
+                reqh.add_header("Authorization", 'Basic '+"aHpzMTA2Mzk6YUEzMTUxMzU=\n")
+                data= urllib2.urlopen(reqh)
+                #file_obj = urllib2.urlopen(URL)
+                begin+=20*1024*1024+1
+                shutil.copyfileobj(data,open(download_file_name,'ab'))
+                time.sleep(1)
+            except:
+                Flag=0
+    except Exception,e:
+        print 'Downloading Failed:/n%s'%e
+    else:
+        print 'DownLoad File Successed %s %s'%(dir_str,log_str)
+    return
+
+foldername_compile=re.compile('href="([a-z_]{1,50})/">')
+filename_compile=re.compile('<a href=.*>.*</a>')
+
+_build_opener()
+if __name__ == '__main__':
+    #_build_opener()
+    reqh= urllib2.Request('http://hgdcx.gameyw.netease.com:8088/logs/h37/')#地址
+    reqh.add_header("Authorization", 'Basic '+"aHpzMTA2Mzk6YUEzMTUxMzU=\n")
+    file_str= urllib2.urlopen(reqh).read()
+    #file_str = urllib2.urlopen('http://h2dc.gameyw.netease.com:8088/logs/h2/').read()
+    #filefolder_list = re.findall(foldername_compile,file_str)
+##    filefolder_list.sort()
+    '''
+    if n==0:
+        for filefolder in filefolder_list:
+            file_str=urllib2.urlopen('http://hgdc.gameyw.netease.com:8088/logs/h12/%s/'%filefolder).read()
+            file_list=[i.split('">')[1].split('</a>')[0] for i in re.findall(filename_compile,file_str)]
+            file_list.sort()
+
+            for filename in file_list:
+                if filename=='Name':continue
+                dir_str=filefolder
+                log_str=filename
+                
+                _build_opener()
+                main()
+
+            double_check=glob.glob(os.path.join(path,dir_str,'????????.log.gz'))
+            for files in double_check:
+                filedate=files[-15:-7]
+                if os.path.exists(os.path.join(path,dir_str,filedate+'.log'))==True:
+                    try:
+                        os.remove(os.path.join(path,dir_str,filedate+'.log'))
+                        print '成功移除%s'%(os.path.join(path,dir_str,filedate+'.log'))
+                    except:
+                        print '移除%s失败'%(os.path.join(path,dir_str,filedate+'.log'))
+                        continue
+    else:
+    '''
+
+    l = 1     
+    reqh= urllib2.Request('http://hgdcx.gameyw.netease.com:8088/logs/h37/%s/'%filefolder)#地址
+    reqh.add_header("Authorization", 'Basic '+"aHpzMTA2Mzk6YUEzMTUxMzU=\n")
+    file_str= urllib2.urlopen(reqh).read()
+    file_list=[i.split('">')[1].split('</a>')[0] for i in re.findall(filename_compile,file_str)]
+    file_list.sort()
+    for filename in file_list:
+        if filename.endswith('offset'):continue
+        filedate = filename[:8]
+        if filedate < file_input:continue
+##        for filename in file_list[-n-1:]:
+##        for filename in file_list:
+##            if filename!=file_input:continue
+        dir_str=filefolder
+        log_str=filename
+        
+        #_build_opener()
+        main()
+        l += 1
+        if l >n:break
+
+    double_check=glob.glob(os.path.join(path,dir_str,'????????.log.gz'))
+    for files in double_check:
+        filedate=files[-15:-7]
+        if os.path.exists(os.path.join(path,dir_str,filedate+'.log'))==True:
+            try:
+                os.remove(os.path.join(path,dir_str,filedate+'.log'))
+                print '成功移除%s'%(os.path.join(path,dir_str,filedate+'.log'))
+            except:
+                print '移除%s失败'%(os.path.join(path,dir_str,filedate+'.log'))
+                continue
+
+    print time.ctime()
+        
+    
